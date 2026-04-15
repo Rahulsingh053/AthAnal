@@ -1,0 +1,26 @@
+# Runs the full stack. The backend defaults to SQLite on a named volume so it
+# works out of the box. To scale up, point DATABASE_URL at Postgres (see README).
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5678:5678"
+    environment:
+      DATABASE_URL: sqlite:////data/peakform.db
+      STORAGE_DIR: /data/storage
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      CORS_ORIGINS: http://localhost:3000
+    volumes:
+      - backend_data:/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE: http://localhost:5678
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:
