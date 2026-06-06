@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply text-zinc-300 antialiased;
+  min-height: 100vh;
+  background-color: #09090b;
+  background-image:
+    radial-gradient(60rem 60rem at -10% -10%, rgba(63, 63, 70, 0.35), transparent 55%),
+    radial-gradient(55rem 55rem at 110% 0%, rgba(39, 39, 42, 0.5), transparent 55%),
+    radial-gradient(50rem 50rem at 50% 120%, rgba(24, 24, 27, 0.6), transparent 55%);
+  background-attachment: fixed;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-zinc-800 bg-zinc-900/80 p-5 shadow-soft backdrop-blur-xl;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-zinc-400;
+  }
+  .input {
+    @apply w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3.5 py-2.5 text-zinc-100
+      shadow-sm outline-none transition placeholder:text-zinc-500
+      focus:border-zinc-500 focus:ring-2 focus:ring-zinc-600/50;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold
+      transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-zinc-100 text-zinc-900 shadow-glow hover:bg-white active:bg-zinc-200;
+  }
+  .btn-ghost {
+    @apply btn border border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800;
+  }
+  .text-gradient {
+    @apply bg-brand-gradient bg-clip-text text-transparent;
+  }
+}
