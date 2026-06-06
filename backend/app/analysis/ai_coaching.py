@@ -100,7 +100,7 @@ def generate_coaching_report(
 
     api_key = settings.anthropic_api_key
     if not api_key:
-        return None
+        return {"narrative": None, "drills": [], "model": None, "error": "ANTHROPIC_API_KEY not configured"}
 
     try:
         import anthropic
@@ -110,7 +110,7 @@ def generate_coaching_report(
 
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=1200,
+            max_tokens=1500,
             messages=[{"role": "user", "content": prompt}],
         )
 
@@ -119,7 +119,7 @@ def generate_coaching_report(
         end = raw.rfind("}") + 1
         if start == -1 or end == 0:
             logger.warning("AI coaching: no JSON found in response")
-            return None
+            return {"narrative": None, "drills": [], "model": None, "error": "No JSON in response"}
 
         data = json.loads(raw[start:end])
         return {
@@ -128,6 +128,6 @@ def generate_coaching_report(
             "model": "claude-haiku-4-5",
         }
 
-    except Exception:
-        logger.exception("AI coaching generation failed")
-        return None
+    except Exception as exc:
+        logger.exception("AI coaching generation failed: %s", exc)
+        return {"narrative": None, "drills": [], "model": None, "error": str(exc)}
