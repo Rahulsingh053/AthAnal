@@ -8,6 +8,17 @@ import { Card, ProgressBar, Spinner } from "@/components/ui";
 import { api, ApiError, type TryProgressUpdate } from "@/lib/api";
 import type { ComparisonReport as Report, Sport } from "@/lib/types";
 
+const AI_FEATURES = [
+  { icon: "🤖", label: "AI coaching narrative" },
+  { icon: "🏋️", label: "3 targeted drills" },
+  { icon: "⚡", label: "Phase detection" },
+  { icon: "⚠️", label: "Injury risk flags" },
+  { icon: "🏆", label: "Pro athlete comparison" },
+  { icon: "📐", label: "Joint angle charts" },
+  { icon: "🎯", label: "Similarity score" },
+  { icon: "🏏", label: "Ball speed estimate" },
+];
+
 export default function TryPage() {
   const [sports, setSports] = useState<Sport[]>([]);
   const [sportId, setSportId] = useState<number | "">("");
@@ -74,6 +85,7 @@ export default function TryPage() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">
+      {/* ── Header ──────────────────────────────────────────────────── */}
       <div className="mb-8 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 text-lg font-bold text-zinc-100">
           <span className="grid h-7 w-7 place-items-center rounded-lg border border-zinc-700 bg-zinc-800 text-xs text-zinc-200">
@@ -82,21 +94,36 @@ export default function TryPage() {
           <span className="text-gradient">PeakForm</span>
         </Link>
         <Link href="/register" className="btn-ghost py-1.5">
-          Sign up to save analyses
+          Sign up free
         </Link>
       </div>
 
-      <div className="mb-8 text-center">
+      {/* ── Hero ────────────────────────────────────────────────────── */}
+      <div className="mb-10 text-center">
         <span className="rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-1 text-xs text-zinc-400 backdrop-blur">
-          Free preview · 1 comparison · no login
+          Free preview · no login required
         </span>
-        <h1 className="mt-4 text-3xl font-bold text-zinc-100">Try a movement comparison</h1>
+        <h1 className="mt-4 text-3xl font-bold text-zinc-100">
+          AI-powered movement analysis
+        </h1>
         <p className="mt-2 text-zinc-400">
-          Upload two clips — ball speed is detected automatically from your bowling action.
-          Side-on, full-body framing works best.
+          Upload two clips of the same movement. Our AI analyses your biomechanics,
+          detects injury risks, compares you to professionals, and writes a personalised coaching report.
         </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          {AI_FEATURES.map((f) => (
+            <span
+              key={f.label}
+              className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-900/60 px-3 py-1 text-xs text-zinc-300"
+            >
+              <span>{f.icon}</span>
+              {f.label}
+            </span>
+          ))}
+        </div>
       </div>
 
+      {/* ── Upload form ─────────────────────────────────────────────── */}
       <form onSubmit={onSubmit} className="grid gap-6">
         <Card>
           <label className="label">Sport</label>
@@ -118,7 +145,7 @@ export default function TryPage() {
             <div className="space-y-3">
               <input
                 className="input"
-                placeholder="Label (optional, e.g. slower spell)"
+                placeholder="Label (e.g. slower spell)"
                 value={baselineLabel}
                 onChange={(e) => setBaselineLabel(e.target.value)}
               />
@@ -136,7 +163,7 @@ export default function TryPage() {
             <div className="space-y-3">
               <input
                 className="input"
-                placeholder="Label (optional, e.g. faster spell)"
+                placeholder="Label (e.g. faster spell)"
                 value={targetLabel}
                 onChange={(e) => setTargetLabel(e.target.value)}
               />
@@ -151,48 +178,68 @@ export default function TryPage() {
           </Card>
         </div>
 
+        <p className="text-xs text-zinc-500">
+          Side-on, full-body framing works best. MP4 / MOV / AVI accepted.
+        </p>
+
         <div>
           <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? "Analysing…" : "Compare now"}
+            {loading ? "Analysing…" : "Analyse with AI →"}
           </button>
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
       </form>
 
+      {/* ── Progress ────────────────────────────────────────────────── */}
       {loading && progress && (
         <Card className="mt-8 space-y-3">
           <div className="flex items-center gap-3">
             <Spinner />
             <p className="text-zinc-300">
-              {progress.message ??
-                (progress.phase === "upload"
-                  ? "Uploading videos…"
-                  : "Analysing both videos…")}
+              {progress.message ?? (progress.phase === "upload" ? "Uploading videos…" : "Analysing…")}
             </p>
           </div>
           <ProgressBar
             value={combinedProgress(progress)}
             label={`${combinedProgress(progress)}% complete`}
           />
-          {progress.phase === "analysis" && (
-            <p className="text-xs text-zinc-500">
-              Both videos are analysed in parallel. Ball speed is estimated from your action.
-            </p>
-          )}
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-600">
+            {combinedProgress(progress) > 20 && <span className="text-zinc-400">✓ Upload complete</span>}
+            {combinedProgress(progress) > 50 && <span className="text-zinc-400">✓ Pose extraction</span>}
+            {combinedProgress(progress) > 80 && <span className="text-zinc-400">✓ Movement comparison</span>}
+            {combinedProgress(progress) > 94 && <span className="text-zinc-400">✓ Phase detection</span>}
+            {combinedProgress(progress) > 96 && <span className="text-zinc-400">⟳ AI coaching report…</span>}
+          </div>
         </Card>
       )}
 
+      {/* ── Report ──────────────────────────────────────────────────── */}
       {report && (
         <div ref={reportRef} className="mt-10">
-          <h2 className="mb-4 text-2xl font-bold text-zinc-100">Your report</h2>
+          <div className="mb-6 flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-zinc-100">Your AI analysis report</h2>
+            <span className="rounded-full border border-indigo-700 bg-indigo-950/40 px-2.5 py-0.5 text-xs font-semibold text-indigo-300">
+              ✦ AI powered
+            </span>
+          </div>
+
           <ComparisonReport report={report} />
-          <Card className="mt-6 text-center">
-            <p className="text-zinc-300">
-              Want to save your analyses and compare over time?{" "}
-              <Link href="/register" className="font-semibold text-zinc-100 hover:underline">
-                Create a free account →
-              </Link>
+
+          <Card className="mt-8 text-center">
+            <p className="text-lg font-semibold text-zinc-100">
+              Save your analyses and track progress over time
             </p>
+            <p className="mt-1 text-sm text-zinc-400">
+              Free account gives you unlimited comparisons, multi-session progress charts and live webcam feedback.
+            </p>
+            <div className="mt-4 flex justify-center gap-3">
+              <Link href="/register" className="btn-primary">
+                Create free account →
+              </Link>
+              <Link href="/login" className="btn-ghost">
+                Sign in
+              </Link>
+            </div>
           </Card>
         </div>
       )}
