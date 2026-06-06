@@ -124,9 +124,10 @@ export interface AiDrill {
 }
 
 export interface AiCoaching {
-  narrative: string;
+  narrative: string | null;
   drills: AiDrill[];
-  model: string;
+  model: string | null;
+  error?: string;
 }
 
 export interface VideoAnalytics {

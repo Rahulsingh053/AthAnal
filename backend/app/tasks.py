@@ -314,12 +314,13 @@ def process_try_job(job_id: str) -> None:
 
         )
 
+        try_job_store.set_message(job_id, "Comparing movements and detecting phases…", progress=90)
         report = compare(ba, ta, analyzer)
 
+        try_job_store.set_message(job_id, "Generating AI coaching report…", progress=97)
         sport_name = analyzer.display_name
         ai = generate_coaching_report(report, sport_name, job.analyzer_key)
-        if ai:
-            report["ai_coaching"] = ai
+        report["ai_coaching"] = ai
 
         try_job_store.complete(job_id, to_jsonable(report))
 
