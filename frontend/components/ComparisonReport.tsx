@@ -5,28 +5,24 @@ import { AngleChart } from "./AngleChart";
 import { BallSpeedCard } from "./BallSpeedCard";
 import { Card } from "./ui";
 
-// ── Speed analysis helpers ─────────────────────────────────────────────────
+// ── helpers ───────────────────────────────────────────────────────────────
 
 const EFFECT_STYLES: Record<string, string> = {
   increases: "bg-zinc-800 text-zinc-200 ring-1 ring-zinc-600",
   decreases: "bg-zinc-900 text-zinc-400 ring-1 ring-zinc-700",
   neutral:   "bg-zinc-800 text-zinc-500 ring-1 ring-zinc-700",
 };
-
 const EFFECT_LABEL: Record<string, string> = {
   increases: "▲ increases speed",
   decreases: "▼ decreases speed",
   neutral:   "– no real change",
 };
 
-// ── Injury severity helpers ────────────────────────────────────────────────
-
 const SEVERITY_BG: Record<string, string> = {
   high:   "border-red-800 bg-red-950/30",
   medium: "border-amber-800 bg-amber-950/20",
   low:    "border-zinc-700 bg-zinc-900",
 };
-
 const SEVERITY_BADGE: Record<string, string> = {
   high:   "bg-red-900 text-red-300",
   medium: "bg-amber-900 text-amber-300",
@@ -39,21 +35,30 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   advanced:     "bg-red-900/40 text-red-300",
 };
 
-// ── Pro comparison helpers ─────────────────────────────────────────────────
-
 const PRO_STATUS_BADGE: Record<string, string> = {
   good:  "bg-emerald-900/40 text-emerald-300",
   below: "bg-amber-900/40 text-amber-300",
   above: "bg-amber-900/40 text-amber-300",
 };
-
 const PRO_STATUS_LABEL: Record<string, string> = {
   good:  "✓ In range",
   below: "↓ Below",
   above: "↑ Above",
 };
 
-// ── Component ──────────────────────────────────────────────────────────────
+// ── Section header chip ────────────────────────────────────────────────────
+
+function SectionLabel({ icon, label, sub }: { icon: string; label: string; sub?: string }) {
+  return (
+    <div className="mb-3 flex items-center gap-2">
+      <span className="text-base">{icon}</span>
+      <h3 className="text-lg font-semibold text-zinc-100">{label}</h3>
+      {sub && <span className="text-xs text-zinc-500">{sub}</span>}
+    </div>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────
 
 export function ComparisonReport({ report }: { report: Report }) {
   const {
@@ -63,48 +68,42 @@ export function ComparisonReport({ report }: { report: Report }) {
   const speed = report.speed_analysis;
   const baselineLabel = summary.baseline_label || "Baseline";
   const targetLabel   = summary.target_label   || "Target";
-  // Use target phases for chart annotations (most relevant to the current session)
-  const targetPhases = phases?.target ?? [];
+  const targetPhases  = phases?.target ?? [];
 
   return (
     <div className="space-y-6">
-      <BallSpeedCard report={report} />
 
-      {/* ── AI Coaching Narrative ─────────────────────────────────────── */}
-      {ai_coaching?.narrative && (
-        <Card className="border-indigo-800 bg-indigo-950/20">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="rounded-full bg-indigo-900 px-2.5 py-0.5 text-xs font-semibold text-indigo-300">
-              ✦ AI Coach
-            </span>
-            <span className="text-xs text-zinc-500">powered by Claude</span>
-          </div>
-          <p className="text-sm leading-relaxed text-zinc-200">{ai_coaching.narrative}</p>
-        </Card>
-      )}
-
-      {/* ── Summary ───────────────────────────────────────────────────── */}
+      {/* ── 🎯 Similarity score + headline ──────────────────────────────── */}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="flex flex-col items-center justify-center text-center">
-          <p className="text-sm text-zinc-400">Movement similarity</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-500">🎯 Similarity score</p>
           <p className="my-1 text-5xl font-extrabold text-gradient">
             {summary.similarity_score}
             <span className="text-2xl">%</span>
           </p>
           <p className="text-xs text-zinc-500">{summary.analyzer}</p>
         </Card>
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 flex flex-col justify-center">
           <p className="text-lg font-semibold text-zinc-100">{summary.headline}</p>
+          {summary.metric && (
+            <p className="mt-2 text-sm text-zinc-400">
+              Performance: {summary.metric.baseline} → {summary.metric.target}
+              {summary.metric.unit ? ` ${summary.metric.unit}` : ""}
+              <span className={`ml-2 font-semibold ${summary.metric.delta >= 0 ? "text-zinc-200" : "text-zinc-500"}`}>
+                ({summary.metric.delta >= 0 ? "+" : ""}{summary.metric.delta})
+              </span>
+            </p>
+          )}
         </Card>
       </div>
 
-      {/* ── Speed analysis (bowling) ───────────────────────────────────── */}
+      {/* ── 🏏 Ball speed ────────────────────────────────────────────────── */}
+      <BallSpeedCard report={report} />
+
+      {/* ── 🏏 Speed analysis factors (bowling) ─────────────────────────── */}
       {speed && (
         <Card>
-          <div className="mb-1 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-zinc-100">Speed analysis</h3>
-            <span className="text-xs text-zinc-500">estimated from video</span>
-          </div>
+          <SectionLabel icon="🏏" label="Ball speed analysis" sub="estimated from video" />
           {speed.estimated && (
             <div className="mb-4 flex flex-wrap items-center gap-6 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
               <Metric label={`${baselineLabel} (est.)`} value={speed.estimated.baseline_kph} unit="kph" />
@@ -142,71 +141,133 @@ export function ComparisonReport({ report }: { report: Report }) {
         </Card>
       )}
 
-      {/* ── Injury risk flags ─────────────────────────────────────────── */}
-      {injury_risks && injury_risks.length > 0 && (
-        <Card>
-          <h3 className="mb-3 text-lg font-semibold text-zinc-100">Injury risk flags</h3>
-          <p className="mb-3 text-xs text-zinc-500">
-            Based on joint angle thresholds from biomechanics literature. Not a medical assessment.
-          </p>
-          <div className="space-y-2">
-            {injury_risks.map((r, i) => (
-              <InjuryRiskCard key={i} risk={r} />
-            ))}
+      {/* ── 🤖 AI coaching narrative ─────────────────────────────────────── */}
+      <Card className={ai_coaching?.narrative ? "border-indigo-800 bg-indigo-950/20" : ""}>
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-base">🤖</span>
+          <h3 className="text-lg font-semibold text-zinc-100">AI coaching narrative</h3>
+          <span className="rounded-full bg-indigo-900 px-2.5 py-0.5 text-xs font-semibold text-indigo-300">
+            ✦ AI Coach
+          </span>
+          <span className="text-xs text-zinc-500">powered by Claude</span>
+        </div>
+        {ai_coaching?.narrative ? (
+          <p className="text-sm leading-relaxed text-zinc-200">{ai_coaching.narrative}</p>
+        ) : (
+          <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-center">
+            <p className="text-sm text-zinc-400">
+              {ai_coaching?.error?.includes("not configured")
+                ? "Add your ANTHROPIC_API_KEY to backend/.env to enable AI coaching reports."
+                : "AI coaching report is being generated — refresh after a moment, or check your API key configuration."}
+            </p>
           </div>
-        </Card>
-      )}
-
-      {/* ── Key insights ──────────────────────────────────────────────── */}
-      <Card>
-        <h3 className="mb-3 text-lg font-semibold text-zinc-100">Key insights</h3>
-        <ul className="space-y-2">
-          {insights.map((line, i) => (
-            <li key={i} className="flex gap-3 text-sm text-zinc-300">
-              <span className="mt-0.5 text-zinc-500">▹</span>
-              <span>{line}</span>
-            </li>
-          ))}
-        </ul>
+        )}
       </Card>
 
-      {/* ── AI Drill Recommendations ───────────────────────────────────── */}
-      {ai_coaching?.drills && ai_coaching.drills.length > 0 && (
-        <Card>
-          <div className="mb-3 flex items-center gap-2">
-            <h3 className="text-lg font-semibold text-zinc-100">Recommended drills</h3>
-            <span className="rounded-full bg-indigo-900 px-2 py-0.5 text-xs font-semibold text-indigo-300">
-              AI
-            </span>
-          </div>
+      {/* ── 🏋️ AI drill recommendations ──────────────────────────────────── */}
+      <Card>
+        <div className="mb-3 flex items-center gap-2">
+          <span className="text-base">🏋️</span>
+          <h3 className="text-lg font-semibold text-zinc-100">Recommended drills</h3>
+          <span className="rounded-full bg-indigo-900 px-2 py-0.5 text-xs font-semibold text-indigo-300">AI</span>
+        </div>
+        {ai_coaching?.drills && ai_coaching.drills.length > 0 ? (
           <div className="grid gap-3 sm:grid-cols-3">
             {ai_coaching.drills.map((drill, i) => (
               <DrillCard key={i} drill={drill} index={i + 1} />
             ))}
           </div>
-        </Card>
-      )}
+        ) : (
+          <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-center">
+            <p className="text-sm text-zinc-400">
+              Drill recommendations require a valid Anthropic API key in backend/.env
+            </p>
+          </div>
+        )}
+      </Card>
 
-      {/* ── Pro athlete comparison ─────────────────────────────────────── */}
-      {pro_comparison && pro_comparison.length > 0 && (
-        <Card>
-          <h3 className="mb-3 text-lg font-semibold text-zinc-100">
-            vs Professional benchmark
-          </h3>
-          <p className="mb-3 text-xs text-zinc-500">
-            Comparing your target performance against elite athlete reference ranges from published biomechanics studies.
-          </p>
+      {/* ── ⚠️ Injury risk flags ─────────────────────────────────────────── */}
+      <Card>
+        <SectionLabel
+          icon="⚠️"
+          label="Injury risk flags"
+          sub="based on biomechanics literature · not a medical assessment"
+        />
+        {injury_risks && injury_risks.length > 0 ? (
+          <div className="space-y-2">
+            {injury_risks.map((r, i) => <InjuryRiskCard key={i} risk={r} />)}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/20 p-4">
+            <p className="text-sm text-emerald-300">✓ No significant joint angle risks detected in this movement.</p>
+          </div>
+        )}
+      </Card>
+
+      {/* ── 🏆 Pro athlete comparison ─────────────────────────────────────── */}
+      <Card>
+        <SectionLabel icon="🏆" label="vs Professional benchmark" />
+        <p className="mb-3 text-xs text-zinc-500">
+          Comparing your target performance against elite athlete reference ranges from published biomechanics studies.
+        </p>
+        {pro_comparison && pro_comparison.length > 0 ? (
           <div className="divide-y divide-zinc-800">
-            {pro_comparison.map((p) => (
-              <ProComparisonRow key={p.joint} item={p} />
+            {pro_comparison.map((p) => <ProComparisonRow key={p.joint} item={p} />)}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900/40 p-4 text-center">
+            <p className="text-sm text-zinc-400">Pro comparison data not available for this sport.</p>
+          </div>
+        )}
+      </Card>
+
+      {/* ── ⚡ Phase detection + Angle charts ─────────────────────────────── */}
+      <div>
+        <div className="mb-3 flex items-center gap-3">
+          <span className="text-base">⚡</span>
+          <h3 className="text-lg font-semibold text-zinc-100">Joint angle over the movement</h3>
+          {targetPhases.length > 0 ? (
+            <span className="text-xs text-zinc-500">coloured regions = movement phases</span>
+          ) : (
+            <span className="text-xs text-zinc-600">phase detection not available</span>
+          )}
+        </div>
+        {/* Phase legend */}
+        {targetPhases.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {targetPhases.map((ph) => (
+              <span
+                key={ph.name}
+                className="flex items-center gap-1.5 rounded-full border border-zinc-700 px-2.5 py-0.5 text-xs text-zinc-300"
+              >
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ backgroundColor: ph.color }}
+                />
+                {ph.label}
+              </span>
             ))}
           </div>
-        </Card>
-      )}
+        )}
+        <div className="grid gap-4 md:grid-cols-2">
+          {Object.entries(angle_series.channels).map(([channel, series]) => (
+            <AngleChart
+              key={channel}
+              title={series.label}
+              timeline={angle_series.timeline_pct}
+              baseline={series.baseline}
+              target={series.target}
+              baselineLabel={baselineLabel}
+              targetLabel={targetLabel}
+              phases={targetPhases}
+            />
+          ))}
+        </div>
+      </div>
 
-      {/* ── Joint differences table ───────────────────────────────────── */}
+      {/* ── 📐 Joint-by-joint differences ────────────────────────────────── */}
       <Card>
-        <h3 className="mb-3 text-lg font-semibold text-zinc-100">Joint-by-joint differences</h3>
+        <SectionLabel icon="📐" label="Joint-by-joint differences" />
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-zinc-500">
@@ -228,9 +289,7 @@ export function ComparisonReport({ report }: { report: Report }) {
                   <td className={`py-2 pr-4 ${d.mean_delta >= 0 ? "text-zinc-200" : "text-zinc-500"}`}>
                     {d.mean_delta >= 0 ? "+" : ""}{d.mean_delta}°
                   </td>
-                  <td className="py-2 pr-4 text-zinc-400">
-                    {d.rom_delta >= 0 ? "+" : ""}{d.rom_delta}°
-                  </td>
+                  <td className="py-2 pr-4 text-zinc-400">{d.rom_delta >= 0 ? "+" : ""}{d.rom_delta}°</td>
                   <td className="py-2 pr-4 font-semibold text-zinc-100">{d.mean_abs_diff_deg}°</td>
                 </tr>
               ))}
@@ -239,7 +298,7 @@ export function ComparisonReport({ report }: { report: Report }) {
         </div>
       </Card>
 
-      {/* ── Timing + key events ───────────────────────────────────────── */}
+      {/* ── Timing + key events ───────────────────────────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <h3 className="mb-3 text-lg font-semibold text-zinc-100">Timing</h3>
@@ -270,29 +329,19 @@ export function ComparisonReport({ report }: { report: Report }) {
         </Card>
       </div>
 
-      {/* ── Angle charts with phase overlays ──────────────────────────── */}
-      <div>
-        <div className="mb-3 flex items-center gap-3">
-          <h3 className="text-lg font-semibold text-zinc-100">Joint angle over the movement</h3>
-          {targetPhases.length > 0 && (
-            <span className="text-xs text-zinc-500">coloured regions = movement phases</span>
-          )}
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          {Object.entries(angle_series.channels).map(([channel, series]) => (
-            <AngleChart
-              key={channel}
-              title={series.label}
-              timeline={angle_series.timeline_pct}
-              baseline={series.baseline}
-              target={series.target}
-              baselineLabel={baselineLabel}
-              targetLabel={targetLabel}
-              phases={targetPhases}
-            />
+      {/* ── Key insights ─────────────────────────────────────────────────── */}
+      <Card>
+        <h3 className="mb-3 text-lg font-semibold text-zinc-100">Key insights</h3>
+        <ul className="space-y-2">
+          {insights.map((line, i) => (
+            <li key={i} className="flex gap-3 text-sm text-zinc-300">
+              <span className="mt-0.5 text-zinc-500">▹</span>
+              <span>{line}</span>
+            </li>
           ))}
-        </div>
-      </div>
+        </ul>
+      </Card>
+
     </div>
   );
 }
@@ -330,8 +379,7 @@ function InjuryRiskCard({ risk }: { risk: InjuryRisk }) {
       </div>
       <p className="mt-1 text-sm text-zinc-300">{risk.message}</p>
       <p className="mt-1 text-xs text-zinc-500">
-        Observed: {risk.observed_angle}° · Safe threshold: {risk.safe_threshold}° ·
-        Deviation: {risk.deviation_deg}°
+        Observed: {risk.observed_angle}° · Safe threshold: {risk.safe_threshold}° · Deviation: {risk.deviation_deg}°
       </p>
     </div>
   );
@@ -360,9 +408,10 @@ function DrillCard({ drill, index }: { drill: AiDrill; index: number }) {
 }
 
 function ProComparisonRow({ item }: { item: ProComparison }) {
-  const barWidth = Math.min(100, (item.athlete_value / (item.pro_range_high * 1.2)) * 100);
-  const rangeLo = Math.min(100, (item.pro_range_low / (item.pro_range_high * 1.2)) * 100);
-  const rangeHi = Math.min(100, (item.pro_range_high / (item.pro_range_high * 1.2)) * 100);
+  const scale = item.pro_range_high * 1.3 || 200;
+  const barWidth = Math.min(100, (item.athlete_value / scale) * 100);
+  const rangeLo  = Math.min(100, (item.pro_range_low  / scale) * 100);
+  const rangeHi  = Math.min(100, (item.pro_range_high / scale) * 100);
 
   return (
     <div className="py-3">
@@ -381,17 +430,14 @@ function ProComparisonRow({ item }: { item: ProComparison }) {
           </span>
         </div>
       </div>
-      {/* Visual bar */}
       <div className="relative mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-        {/* Pro range highlight */}
         <div
           className="absolute top-0 h-full rounded-full bg-zinc-600 opacity-50"
           style={{ left: `${rangeLo}%`, width: `${rangeHi - rangeLo}%` }}
         />
-        {/* Athlete value */}
         <div
           className={`absolute top-0 h-full w-1.5 rounded-full ${item.status === "good" ? "bg-emerald-400" : "bg-amber-400"}`}
-          style={{ left: `${barWidth}%` }}
+          style={{ left: `${Math.min(98, barWidth)}%` }}
         />
       </div>
       {item.gap_deg > 0 && (
