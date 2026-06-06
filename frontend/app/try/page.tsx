@@ -110,6 +110,7 @@ export default function TryPage() {
           Upload two clips of the same movement. Our AI analyses your biomechanics,
           detects injury risks, compares you to professionals, and writes a personalised coaching report.
         </p>
+
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           {AI_FEATURES.map((f) => (
             <span
