@@ -38,3 +38,7 @@ yarn-error.log*
 .idea/
 .vscode/
 Thumbs.db
+
+# Next.js auto-generated
+frontend/next-env.d.ts
+frontend/tsconfig.tsbuildinfo
