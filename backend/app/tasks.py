@@ -282,7 +282,7 @@ def process_try_job(job_id: str) -> None:
 
 
 
-        try_job_store.set_message(job_id, "Comparing movements…", progress=95)
+        try_job_store.set_message(job_id, "Comparing movements and detecting phases…", progress=90)
 
         analyzer = get_analyzer(job.analyzer_key)
 
@@ -418,8 +418,7 @@ def process_comparison_task(comparison_id: int) -> None:
 
         sport_name = baseline.sport.name if baseline.sport else analyzer.display_name
         ai = generate_coaching_report(report, sport_name, analyzer.key)
-        if ai:
-            report["ai_coaching"] = ai
+        report["ai_coaching"] = ai
 
         comparison.report = to_jsonable(report)
 
